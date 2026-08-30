@@ -1,5 +1,7 @@
 # HMT — Hyperlocal Misinformation Tracker for Disaster Relief
 
+**Live frontend:** https://shachita05.github.io/HMT_for_disaster_relief/ (deployed via GitHub Actions on push to `main`, see `.github/workflows/deploy-frontend.yml`)
+
 A disaster information analysis and misinformation tracking system (BE capstone project) — **not** a live real-time
 tracker. It takes a disaster-related claim, analyzes it through a real pipeline (relevance → disaster type →
 location → misinformation classification → evidence → reliability → priority), and persists the result so a
