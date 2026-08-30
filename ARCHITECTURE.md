@@ -2,46 +2,46 @@
 
 ## System diagram
 
-Four entry points all call the same `src/` pipeline — nothing in `src/` was forked or duplicated for the
-full-stack rebuild.
+Two entry points call the same `src/` pipeline — nothing in `src/` was forked or duplicated for the full-stack
+rebuild. (A third entry point, a Streamlit dashboard, existed early in the project and was removed once the React
+frontend below replaced it — see `STATUS.md`.)
 
 ```
-                    ┌─────────────────────────────────────────────┐
-                    │                  src/                        │
-                    │  analyze_claim.py  (the pipeline function)   │
-                    │  ├─ disaster/        (relevance + type)      │
-                    │  ├─ location/        (gazetteer + geocode)   │
-                    │  ├─ misinformation/  (TF-IDF+LogReg verdict) │
-                    │  ├─ verification/    (stored-corpus check)   │
-                    │  ├─ preprocessing/   (feed text only)        │
-                    │  └─ utils/           (priority + reliability)│
-                    └───────────────┬───────────────────────────────┘
-              ┌──────────┬──────────┼──────────┬──────────────┐
-              │          │          │          │
-        ┌─────▼───┐ ┌────▼─────┐ ┌──▼───────────────┐
-        │ run.py  │ │dashboard/│ │ backend/app/       │
-        │ (CLI)   │ │app.py    │ │ services/          │
-        │         │ │(Streamlit)│ │ pipeline_service.py│
-        └─────────┘ └──────────┘ └──┬─────────────────┘
-                                     │ persists to
-                              ┌──────▼───────┐        ┌──────────────────┐
-                              │ SQLite (hmt.db)│◄──────┤ external_feeds/  │
-                              │ Claim/Location/│       │ USGS, GDACS, real │
-                              │ Evidence/Alert │       │ ReliefWeb (stub), │
-                              └──────┬─────────┘       │ NewsAPI etc (stub)│
-                                     │ served via       └──────────────────┘
-                              ┌──────▼───────┐
-                              │ FastAPI routers│
-                              │ /api/claims,   │
-                              │ stats, map,    │
-                              │ alerts, feeds  │
-                              └──────┬─────────┘
-                                     │ REST (JSON)
-                              ┌──────▼───────┐
-                              │ React SPA      │
-                              │ (frontend/)    │
-                              │ 8 pages        │
-                              └────────────────┘
+              ┌───────────────────────────────────────────────┐
+              │                      src/                        │
+              │  analyze_claim.py  (the pipeline function)       │
+              │  ├─ disaster/        (relevance + type)          │
+              │  ├─ location/        (gazetteer + geocode)       │
+              │  ├─ misinformation/  (TF-IDF+LogReg verdict)     │
+              │  ├─ verification/    (stored-corpus check)       │
+              │  ├─ preprocessing/   (feed text only)            │
+              │  └─ utils/           (priority + reliability)    │
+              └─────────────────┬───────────────┬─────────────────┘
+                                 │               │
+                          ┌──────▼──┐    ┌───────▼────────────┐
+                          │ run.py  │    │ backend/app/        │
+                          │ (CLI)   │    │ services/           │
+                          │         │    │ pipeline_service.py │
+                          └─────────┘    └──────────┬──────────┘
+                                                     │ persists to
+                       ┌──────────────────┐  ┌───────▼─────────┐
+                       │ external_feeds/   │─►│ SQLite (hmt.db) │
+                       │ USGS, GDACS real; │  │ Claim/Location/ │
+                       │ ReliefWeb/NewsAPI │  │ Evidence/Alert  │
+                       │ etc. stubs        │  └───────┬─────────┘
+                       └───────────────────┘          │ served via
+                                              ┌────────▼────────┐
+                                              │ FastAPI routers │
+                                              │ /api/claims,    │
+                                              │ stats, map,     │
+                                              │ alerts, feeds   │
+                                              └────────┬────────┘
+                                                        │ REST (JSON)
+                                              ┌─────────▼────────┐
+                                              │ React SPA         │
+                                              │ (frontend/)       │
+                                              │ 8 pages           │
+                                              └───────────────────┘
 ```
 
 ## Module responsibility map
@@ -113,12 +113,12 @@ degrading accuracy with no error raised. If preprocessing is ever wanted there, 
 
 ## Why FastAPI wraps `src/` instead of replacing it
 
-`analyze_claim()`'s CLI (`run.py`) and Streamlit dashboard (`dashboard/app.py`) both already worked and were
-already tested. `backend/app/services/pipeline_service.py` imports `analyze_claim` with the identical
-`sys.path.insert` convention those two already use, calls it unchanged, and only adds persistence + live-evidence
-enrichment on top. `backend/tests/test_api_claims.py::test_api_matches_cli_pipeline_output` asserts the API's
-output for a fixed input matches a direct `analyze_claim()` call, as a standing regression guard against the API
-ever drifting into reimplementing pipeline logic.
+`analyze_claim()`'s CLI (`run.py`) already worked and was already tested.
+`backend/app/services/pipeline_service.py` imports `analyze_claim` with the identical `sys.path.insert` convention
+`run.py` already uses, calls it unchanged, and only adds persistence + live-evidence enrichment on top.
+`backend/tests/test_api_claims.py::test_api_matches_cli_pipeline_output` asserts the API's output for a fixed
+input matches a direct `analyze_claim()` call, as a standing regression guard against the API ever drifting into
+reimplementing pipeline logic.
 
 ## Deployment
 

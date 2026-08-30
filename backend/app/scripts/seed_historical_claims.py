@@ -2,9 +2,11 @@
 One-time (rerunnable) seed script: imports data/processed/ifnd_full.parquet
 (1002 rows -- the full IFND disaster subset already run through Stages
 2-7 by src/build_baseline.py / classify_ifnd.py / locate_ifnd.py, the same
-file dashboard/app.py's tab 2 already reads live) into the database, so
-the React dashboard/map/claims list have realistic, non-trivial content
-immediately on a fresh clone rather than starting completely empty.
+file the original Streamlit prototype's dataset-overview tab used to read
+live -- that prototype has since been removed, see STATUS.md) into the
+database, so the React dashboard/map/claims list have realistic,
+non-trivial content immediately on a fresh clone rather than starting
+completely empty.
 
 Deliberately does NOT re-run the ML pipeline on these 1002 rows -- the
 parquet already has primary_type/verdict/verdict_confidence/priority/

@@ -2,7 +2,6 @@ pandas
 pyarrow
 scikit-learn==1.8.0  # pinned: outputs/baseline_a_*.joblib were pickled under 1.8.0
 joblib
-streamlit
 
 # backend (FastAPI + DB) -- see backend/app/
 fastapi

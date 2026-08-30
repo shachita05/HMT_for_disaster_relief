@@ -7,7 +7,9 @@ columns, so this module reads two small, committed CSVs instead:
       population (GeoNames cities1000, CC BY 4.0 -- see
       src/location/build_city_centroids.py and DATA_SOURCES.md)
   data/external/state_centroids.csv -- 32 state/UT capital-ish centroids,
-      promoted verbatim from dashboard/app.py's original STATE_COORDS dict
+      promoted verbatim from the original Streamlit prototype's
+      STATE_COORDS dict (that prototype has since been removed in favor
+      of the React frontend -- see STATUS.md)
 
 KNOWN, PERMANENT LIMITATION -- state this plainly wherever coordinates are
 shown (Map page, README): a locality-level match (e.g. "Whitefield")

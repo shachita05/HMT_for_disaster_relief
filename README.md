@@ -7,11 +7,10 @@ relief organization can triage information through a dashboard rather than treat
 trustworthy. Any automated data ingestion it does is **periodic/near-real-time monitoring** (a 15-minute poll), never a
 live stream.
 
-Two ways to run it, both real and both still functional:
-
-1. **Full-stack version** (FastAPI + React) — the primary, current way to use this project. See below.
-2. **Original CLI/Streamlit prototype** — the project's starting point, kept working and unmodified in its
-   core logic. See [Original prototype quick start](#original-prototype-quick-start-cli--streamlit).
+The primary way to use this project is the full-stack version below (FastAPI + React). A CLI entry point
+(`run.py`) also still works, calling the exact same underlying pipeline — useful for a quick one-off check without
+starting either server. (An early Streamlit dashboard existed during development and was removed once the React
+frontend replaced it — see `STATUS.md` if you're looking for it in history.)
 
 Everything in this README states only what actually ran. See `STATUS.md` for the full session-by-session history
 and `ARCHITECTURE.md` for the system design.
@@ -53,12 +52,12 @@ docker compose up --build
 docker compose exec backend python app/scripts/seed_historical_claims.py
 ```
 
-## Original prototype quick start (CLI / Streamlit)
+## CLI (no server needed)
 
-The pipeline this was built on top of (`src/analyze_claim.py` and friends) is unmodified in its core ML/NLP/scoring
-logic — the full-stack backend wraps it rather than replacing it (see `backend/app/services/pipeline_service.py`,
-and the regression test in `backend/tests/test_api_claims.py` that diffs the API's output against a direct call to
-this same function).
+The pipeline itself (`src/analyze_claim.py` and friends) is unmodified in its core ML/NLP/scoring logic — the
+full-stack backend wraps it rather than replacing it (see `backend/app/services/pipeline_service.py`, and the
+regression test in `backend/tests/test_api_claims.py` that diffs the API's output against a direct call to this
+same function). For a quick one-off check without starting the backend or frontend:
 
 ```bash
 python3 -m venv venv
@@ -66,7 +65,6 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 python3 run.py "Heavy rainfall has caused severe flooding in Whitefield, Bengaluru."
-streamlit run dashboard/app.py
 ```
 
 ## What's real vs. what's a placeholder
@@ -86,7 +84,7 @@ streamlit run dashboard/app.py
 | Priority score (`src/utils/priority_scorer.py`) | Real, rule-based, additive, fully documented |
 | Alerts (`backend/app/services/alerts_service.py`) | Real — generated automatically for HIGH-priority + well-supported (or confidently-fake) claims. Never contacts emergency services. |
 | Backend API (`backend/`) | Real — FastAPI + SQLAlchemy + SQLite, wraps the pipeline above, persists every claim/location/evidence/alert |
-| Frontend dashboard (`frontend/`) | Real — React + TypeScript SPA, 8 pages, charts, a real Leaflet/OpenStreetMap map |
+| Frontend dashboard (`frontend/`) | Real — React + TypeScript SPA, 8 pages, charts, a real Leaflet/OpenStreetMap map. (The project's original Streamlit dashboard has been removed now that this replaces it.) |
 | MuRIL / IndicBERT / LLM misinformation classifiers | `NotImplementedError` stubs — needs labeled multilingual data that doesn't exist yet |
 
 ## Known limitations (be ready for these in your viva)
@@ -129,8 +127,7 @@ hmt-complete-project_1/
 │   └── analyze_claim.py               # the combined pipeline, unmodified since the original prototype
 ├── backend/                           # FastAPI + SQLAlchemy -- wraps src/, adds DB/evidence/alerts/API
 │   └── app/{db,routers,schemas,services,external_feeds,scripts}/
-├── frontend/                          # React + TypeScript SPA (8 pages)
-├── dashboard/app.py                   # original Streamlit dashboard, still functional
+├── frontend/                          # React + TypeScript SPA (8 pages) -- the project's dashboard
 ├── run.py                             # original CLI entry point, still functional
 ├── docker-compose.yml, backend/Dockerfile, frontend/Dockerfile
 ├── ARCHITECTURE.md                    # system design, ABC "swap points", DB schema

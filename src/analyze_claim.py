@@ -62,10 +62,10 @@ def analyze_claim(text: str) -> dict:
             "match_level": loc_best.match_level,
         } if loc_best else None,
         # Each entry below keeps the original "text"/"state"/"level" keys
-        # unchanged (existing callers -- print_result, dashboard/app.py --
-        # only read those) and additively includes the rest of the
-        # LocationMatch breakdown, needed by the backend to persist one
-        # full Location row per mention rather than just the primary one.
+        # unchanged (existing callers -- print_result -- only read those)
+        # and additively includes the rest of the LocationMatch breakdown,
+        # needed by the backend to persist one full Location row per
+        # mention rather than just the primary one.
         "all_locations": [
             {
                 "text": m.matched_text, "state": m.state, "level": m.match_level,

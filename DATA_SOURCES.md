@@ -64,10 +64,11 @@ turned out to be genuinely no-key/no-signup as planned, one did not:
 ## Location centroid datasets (full-stack rebuild)
 
 Neither of these existed in the original prototype — the gazetteer
-(`pincodes_kishorek.csv`) has no lat/lon columns at all, so the Streamlit
-dashboard's map was state-centroid-only via a hardcoded dict. These two
-CSVs are what `src/location/geocode_lookup.py` reads instead (offline,
-no network call at request time — see that module's docstring).
+(`pincodes_kishorek.csv`) has no lat/lon columns at all, so the original
+Streamlit dashboard's map (since removed, see STATUS.md) was
+state-centroid-only via a hardcoded dict. These two CSVs are what
+`src/location/geocode_lookup.py` reads instead (offline, no network call
+at request time — see that module's docstring).
 
 **`data/external/city_centroids.csv`** — top 400 Indian cities by
 population, from GeoNames' free `cities1000` dump (every populated place
@@ -81,9 +82,9 @@ Regenerate via `python3 src/location/build_city_centroids.py` (needs
 network access; nothing else in the app does).
 
 **`data/external/state_centroids.csv`** — 32 state/UT centroids, promoted
-verbatim from `dashboard/app.py`'s original hardcoded `STATE_COORDS` dict
+verbatim from the old Streamlit prototype's hardcoded `STATE_COORDS` dict
 (hand-verified state-capital coordinates, not derived from any external
-dataset). No new sourcing risk — this is a straight move, not new data.
+dataset). No new sourcing risk — this was a straight move, not new data.
 
 **Known, permanent limitation** (state this plainly anywhere coordinates
 are shown): a locality-level match renders at its *city's* centroid, and

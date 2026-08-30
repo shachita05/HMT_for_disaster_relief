@@ -4,7 +4,7 @@ Pytest root conftest for the backend test suite.
 Puts backend/ on sys.path so `import app...` works the same way it does
 when uvicorn is run from inside backend/, and puts src/ on sys.path so the
 backend can import the existing, unmodified pipeline (analyze_claim.py and
-friends) the same way run.py and dashboard/app.py already do.
+friends) the same way run.py already does.
 """
 import os
 import sys

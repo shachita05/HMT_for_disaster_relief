@@ -125,3 +125,21 @@ hyperlocal-misinfo-tracker/
 │   └── baseline_results_summary.json
 └── DATA_SOURCES.md                            (exact commands to re-download PHEME/HumAID/IDRISI)
 ```
+
+## Session: 2026-08-30 — removed the Streamlit dashboard
+
+`dashboard/app.py` (the "Session: 2026-08-29" entry above, item "Real Streamlit app, tested end-to-end") has been
+**deleted**, at the user's request, now that the React frontend (`frontend/`) fully replaces it — the React app
+covers everything the Streamlit app did (single-claim analysis, dataset overview/charts/map) plus the full spec
+(8 pages, persistence, live evidence, alerts) that Streamlit was never going to grow into.
+
+What changed:
+- `dashboard/` directory removed; `streamlit` dropped from `requirements.txt`.
+- `run.py`'s usage message no longer points at it.
+- Docstring references to `dashboard/app.py` in `src/analyze_claim.py`, `src/location/geocode_lookup.py`,
+  `backend/app/scripts/seed_historical_claims.py`, and both `conftest.py` files updated to describe it as
+  removed/historical rather than a currently-live file.
+- `README.md` and `ARCHITECTURE.md` updated to describe two entry points (CLI + full-stack) instead of three.
+
+Nothing about the underlying pipeline (`src/analyze_claim.py` and its submodules) changed — Streamlit was a thin
+UI layer on top of it, and removing it doesn't affect `run.py`, the backend, or any test.

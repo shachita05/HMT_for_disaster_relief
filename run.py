@@ -2,8 +2,10 @@
 CLI entry point.
 
     python3 run.py "your claim text here"
-    streamlit run dashboard/app.py     (for the dashboard -- run.py doesn't launch it,
-                                         streamlit needs to be the process entry point itself)
+
+For the full dashboard, see the React frontend in frontend/ (talks to the
+FastAPI backend in backend/) -- see the root README's "Full-stack quick
+start" section.
 """
 import sys
 import os
@@ -19,4 +21,4 @@ if __name__ == "__main__":
     else:
         print("Usage:")
         print('  python3 run.py "Heavy rainfall has caused severe flooding in Whitefield, Bengaluru."')
-        print("  streamlit run dashboard/app.py   (for the dashboard)")
+        print("  For the full dashboard: see the React frontend in frontend/ (README.md).")
