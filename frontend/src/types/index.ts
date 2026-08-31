@@ -57,6 +57,7 @@ export interface ClaimDetail extends ClaimOut {
   reason: string | null;
   locations: LocationOut[];
   evidence: EvidenceOut[];
+  official_verification_message: string;
 }
 
 export interface ClaimListResponse {

@@ -26,6 +26,13 @@ def should_alert(claim: Claim) -> bool:
         return True
     if claim.classification == "FAKE" and claim.confidence >= CONFIDENT_FAKE_THRESHOLD:
         return True
+    # Genuinely unverifiable (LOW reliability, not even confidently FAKE) but
+    # still high-priority -- previously this fell through to no alert at all,
+    # silently leaving an attention-worthy, unconfirmed claim unflagged. It
+    # needs human/official review precisely because nothing else has
+    # resolved it either way.
+    if claim.reliability_band == "LOW":
+        return True
     return False
 
 
@@ -37,6 +44,10 @@ def build_alert_for_claim(claim: Claim) -> Alert:
         reason_parts.append(
             f"Classified FAKE with {claim.confidence:.0%} confidence -- flagged so it can be "
             f"debunked before it spreads further, independent of the reliability score below."
+        )
+    elif claim.reliability_band == "LOW":
+        reason_parts.append(
+            "Could not be verified against official sources -- flagged for human review."
         )
     if claim.reliability_band:
         reason_parts.append(f"Reliability is {claim.reliability_band} (score={claim.reliability_score}/100).")

@@ -17,7 +17,8 @@ export function ClaimAnalysisView({ result }: { result: ClaimDetail }) {
             {result.disaster_type} · {(result.confidence * 100).toFixed(0)}% model confidence
           </span>
         </div>
-        <p style={{ margin: "0 0 10px", fontSize: 15 }}>{result.reason}</p>
+        <p style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 600 }}>{result.official_verification_message}</p>
+        <p className="muted" style={{ margin: "0 0 10px", fontSize: 14 }}>{result.reason}</p>
         <ReliabilityMeter score={result.reliability_score} band={result.reliability_band} />
       </div>
 

@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, computed_field, field_validator
 
 from app.schemas.location import LocationOut
 from app.schemas.evidence import EvidenceOut
+from app.services.verification_message import build_verification_message
 
 MAX_CLAIM_LENGTH = 2000
 
@@ -58,6 +59,17 @@ class ClaimDetail(ClaimOut):
     reason: str | None
     locations: list[LocationOut]
     evidence: list[EvidenceOut]
+
+    @computed_field
+    @property
+    def official_verification_message(self) -> str:
+        has_live_official_match = any(e.evidence_type == "live_feed_match" for e in self.evidence)
+        return build_verification_message(
+            classification=self.classification,
+            confidence=self.confidence,
+            reliability_band=self.reliability_band,
+            has_live_official_match=has_live_official_match,
+        )
 
 
 class ClaimListResponse(BaseModel):
