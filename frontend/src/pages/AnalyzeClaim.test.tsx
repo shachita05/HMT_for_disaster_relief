@@ -36,6 +36,7 @@ const SAMPLE_RESULT: ClaimDetail = {
   reason: "The claim matches 'Flood'-type disaster keywords.",
   locations: [],
   evidence: [],
+  official_verification_message: "Partially supported -- classified TRUE by the model, but independent official confirmation is limited.",
 };
 
 function renderPage() {

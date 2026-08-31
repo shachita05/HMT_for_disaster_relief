@@ -31,6 +31,14 @@ def test_confident_fake_high_priority_also_alerts_even_with_low_reliability():
     assert alert is not None
 
 
+def test_unverifiable_high_priority_alerts_for_human_review():
+    alert = maybe_create_alert(
+        _claim(classification="UNVERIFIED", confidence=0.3, reliability_score=10, reliability_band="LOW")
+    )
+    assert alert is not None
+    assert "flagged for human review" in alert.reason_text.lower()
+
+
 def test_acknowledge_is_idempotent():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
