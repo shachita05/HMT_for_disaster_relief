@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.services.social_corroboration import HIGH_THRESHOLD, has_fact_check_false, social_level
+from app.services.social_corroboration import HIGH_THRESHOLD, social_level
 
 
 @dataclass
@@ -43,9 +43,3 @@ def test_ignores_non_social_evidence_types():
     level, count = social_level(evidence)
     assert count == 5
     assert level == "HIGH"
-
-
-def test_has_fact_check_false_true_and_false_cases():
-    assert has_fact_check_false([_Ev(evidence_type="fact_check_false", source="Alt News")]) is True
-    assert has_fact_check_false([_Ev(evidence_type="fact_check_true", source="Alt News")]) is False
-    assert has_fact_check_false([]) is False

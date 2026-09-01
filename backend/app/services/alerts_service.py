@@ -22,15 +22,16 @@ CONFIDENT_FAKE_THRESHOLD = 0.65  # matches UNVERIFIED_CONFIDENCE_THRESHOLD in mi
 
 def should_alert(claim: Claim) -> bool:
     social_level, _ = social_corroboration.social_level(claim.evidence)
-    high_social_corroboration = (
-        social_level == "HIGH" and not social_corroboration.has_fact_check_false(claim.evidence)
-    )
 
     # High social corroboration is alert-worthy on its own, independent of
-    # priority/reliability -- it's a distinct "this is spreading/developing
-    # right now, relief orgs should look" signal, not a substitute for the
-    # existing priority-driven checks below.
-    if high_social_corroboration:
+    # priority/reliability/fact-check -- it's a distinct "this is
+    # spreading/developing right now, relief orgs should look" signal, not
+    # a truth verdict. NOT suppressed by a fact-check False rating: a real
+    # fact-checker debunking one specific piece of viral content doesn't
+    # mean the broader event a lot of people are independently reporting
+    # isn't real too -- see verification_message.py's module docstring for
+    # the same reasoning applied to the headline message.
+    if social_level == "HIGH":
         return True
 
     if claim.priority != "HIGH":
@@ -51,12 +52,9 @@ def should_alert(claim: Claim) -> bool:
 
 def build_alert_for_claim(claim: Claim) -> Alert:
     social_level, social_account_count = social_corroboration.social_level(claim.evidence)
-    high_social_corroboration = (
-        social_level == "HIGH" and not social_corroboration.has_fact_check_false(claim.evidence)
-    )
 
     reason_parts = []
-    if high_social_corroboration:
+    if social_level == "HIGH":
         reason_parts.append(
             f"High social media corroboration ({social_account_count} independent accounts) "
             f"around this '{claim.disaster_type}' claim."
