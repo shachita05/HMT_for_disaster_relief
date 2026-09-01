@@ -27,9 +27,11 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///./test_hmt.db")
 # see backend/tests/test_external_feeds.py.
 os.environ.setdefault("ENABLE_FEED_SCHEDULER", "false")
 
-# Same reasoning for the Google Fact Check lookup pipeline_service.py makes
-# on every claim submission: blank the key so it raises FeedNotConfiguredError
-# (silently skipped, see pipeline_service.py) instead of making a real,
-# per-test-run network call. google_fact_check.search() itself is tested
-# directly with a mocked requests.get, see test_google_fact_check.py.
+# Same reasoning for the Google Fact Check / NewsAPI lookups
+# pipeline_service.py makes on every claim submission: blank the keys so
+# they raise FeedNotConfiguredError (silently skipped, see
+# pipeline_service.py) instead of making a real, per-test-run network
+# call. Each search() is tested directly with a mocked requests.get, see
+# test_google_fact_check.py / test_newsapi_feed.py.
 os.environ["GOOGLE_FACT_CHECK_API_KEY"] = ""
+os.environ["NEWS_API_KEY"] = ""
