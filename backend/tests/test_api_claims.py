@@ -10,6 +10,8 @@ from app.db.base import Base
 from app.db.session import engine
 from app.external_feeds.google_fact_check import FactCheckResult
 from app.external_feeds.newsapi_feed import NewsArticle
+from app.external_feeds.mastodon_feed import SocialPost
+from datetime import datetime, timezone
 
 client = TestClient(app)
 
@@ -99,6 +101,64 @@ def test_newsapi_article_becomes_evidence_without_overriding_message():
     # A NewsAPI hit alone must never claim official/fact-checked confirmation.
     assert "official sources" not in body["official_verification_message"]
     assert "fact-checker" not in body["official_verification_message"].lower()
+
+
+def test_high_social_corroboration_floors_reliability_and_alerts():
+    posts = [
+        SocialPost(
+            id=str(i),
+            account_handle=f"user{i}@example.social",
+            content_text="Flooding reported in Bengaluru",
+            url=f"https://example.social/{i}",
+            created_at=datetime.now(timezone.utc),
+            favourites_count=1,
+            reblogs_count=0,
+            replies_count=0,
+        )
+        for i in range(5)
+    ]
+    with patch("app.external_feeds.mastodon_feed.search_hashtags", return_value=posts):
+        resp = client.post("/api/claims", json={"text": SAMPLE})
+    assert resp.status_code == 201
+    body = resp.json()
+
+    social_evidence = [e for e in body["evidence"] if e["evidence_type"] == "social_corroboration"]
+    assert len(social_evidence) == 5
+    assert body["reliability_band"] in ("MEDIUM", "HIGH")  # floored up from LOW if it would've been LOW
+    assert "5 independent accounts" in body["official_verification_message"]
+    assert "not a verified consensus" in body["official_verification_message"].lower()
+
+
+def test_fact_check_false_wins_over_high_social_corroboration_end_to_end():
+    posts = [
+        SocialPost(
+            id=str(i),
+            account_handle=f"user{i}@example.social",
+            content_text="Flooding reported in Bengaluru",
+            url=f"https://example.social/{i}",
+            created_at=datetime.now(timezone.utc),
+            favourites_count=0,
+            reblogs_count=0,
+            replies_count=0,
+        )
+        for i in range(5)
+    ]
+    fake_result = FactCheckResult(
+        publisher="PolitiFact",
+        title=SAMPLE,
+        url="https://example.com/review",
+        textual_rating="False",
+        normalized_rating="FALSE",
+    )
+    with patch("app.external_feeds.mastodon_feed.search_hashtags", return_value=posts), \
+         patch("app.external_feeds.google_fact_check.search", return_value=[fake_result]):
+        resp = client.post("/api/claims", json={"text": SAMPLE})
+    assert resp.status_code == 201
+    body = resp.json()
+
+    assert body["reliability_band"] == "LOW"
+    assert "independent accounts" not in body["official_verification_message"]
+    assert "False" in body["official_verification_message"]
 
 
 def test_api_matches_cli_pipeline_output():
