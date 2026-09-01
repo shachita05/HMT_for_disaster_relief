@@ -30,3 +30,43 @@ def test_medium_band_without_live_match_is_partial():
     )
     assert "Partially supported" in msg
     assert "TRUE" in msg
+
+
+def test_fact_check_false_overrides_true_classification():
+    msg = build_verification_message(
+        classification="TRUE",
+        confidence=0.8,
+        reliability_band="HIGH",
+        has_live_official_match=True,
+        fact_check_verdict="FALSE",
+        fact_check_publisher="PolitiFact",
+    )
+    assert "False" in msg
+    assert "PolitiFact" in msg
+    assert "contradicts" in msg.lower()
+
+
+def test_fact_check_true_agrees_with_true_classification_no_contradiction_note():
+    msg = build_verification_message(
+        classification="TRUE",
+        confidence=0.8,
+        reliability_band="HIGH",
+        has_live_official_match=False,
+        fact_check_verdict="TRUE",
+        fact_check_publisher="AFP Fact Check",
+    )
+    assert "Confirmed" in msg
+    assert "contradicts" not in msg.lower()
+
+
+def test_fact_check_takes_precedence_over_live_official_match():
+    msg = build_verification_message(
+        classification="TRUE",
+        confidence=0.9,
+        reliability_band="HIGH",
+        has_live_official_match=True,
+        fact_check_verdict="FALSE",
+        fact_check_publisher="BOOM",
+    )
+    assert "ReliefWeb" not in msg
+    assert "False" in msg

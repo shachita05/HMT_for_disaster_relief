@@ -1,5 +1,6 @@
 import os
 import sys
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,6 +8,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.db.base import Base
 from app.db.session import engine
+from app.external_feeds.google_fact_check import FactCheckResult
 
 client = TestClient(app)
 
@@ -55,6 +57,27 @@ def test_list_claims_filter_by_verdict():
     body = resp.json()
     assert body["total"] >= 1
     assert any(c["id"] == created["id"] for c in body["items"])
+
+
+def test_fact_check_false_caps_reliability_low_without_changing_classification():
+    fake_result = FactCheckResult(
+        publisher="PolitiFact",
+        title=SAMPLE,
+        url="https://example.com/review",
+        textual_rating="False",
+        normalized_rating="FALSE",
+    )
+    with patch("app.external_feeds.google_fact_check.search", return_value=[fake_result]):
+        resp = client.post("/api/claims", json={"text": SAMPLE})
+    assert resp.status_code == 201
+    body = resp.json()
+
+    assert body["reliability_band"] == "LOW"
+    assert "PolitiFact" in body["official_verification_message"]
+    assert "False" in body["official_verification_message"]
+    fact_check_evidence = [e for e in body["evidence"] if e["evidence_type"] == "fact_check_false"]
+    assert len(fact_check_evidence) == 1
+    assert fact_check_evidence[0]["source"] == "PolitiFact"
 
 
 def test_api_matches_cli_pipeline_output():
