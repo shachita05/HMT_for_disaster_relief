@@ -15,11 +15,24 @@ services contacted" caveat can never drift out of sync between the API
 and the UI.
 """
 from app.db.models import ALERT_SCOPE_NOTE, Alert, Claim
+from app.services import social_corroboration
 
 CONFIDENT_FAKE_THRESHOLD = 0.65  # matches UNVERIFIED_CONFIDENCE_THRESHOLD in misinformation_classifier.py
 
 
 def should_alert(claim: Claim) -> bool:
+    social_level, _ = social_corroboration.social_level(claim.evidence)
+    high_social_corroboration = (
+        social_level == "HIGH" and not social_corroboration.has_fact_check_false(claim.evidence)
+    )
+
+    # High social corroboration is alert-worthy on its own, independent of
+    # priority/reliability -- it's a distinct "this is spreading/developing
+    # right now, relief orgs should look" signal, not a substitute for the
+    # existing priority-driven checks below.
+    if high_social_corroboration:
+        return True
+
     if claim.priority != "HIGH":
         return False
     if claim.reliability_band in ("HIGH", "MEDIUM"):
@@ -37,15 +50,27 @@ def should_alert(claim: Claim) -> bool:
 
 
 def build_alert_for_claim(claim: Claim) -> Alert:
-    reason_parts = [
-        f"Priority is HIGH (score={claim.priority_score}) for a '{claim.disaster_type}' claim.",
-    ]
+    social_level, social_account_count = social_corroboration.social_level(claim.evidence)
+    high_social_corroboration = (
+        social_level == "HIGH" and not social_corroboration.has_fact_check_false(claim.evidence)
+    )
+
+    reason_parts = []
+    if high_social_corroboration:
+        reason_parts.append(
+            f"High social media corroboration ({social_account_count} independent accounts) "
+            f"around this '{claim.disaster_type}' claim."
+        )
+    if claim.priority == "HIGH":
+        reason_parts.append(
+            f"Priority is HIGH (score={claim.priority_score}) for a '{claim.disaster_type}' claim."
+        )
     if claim.classification == "FAKE" and claim.confidence >= CONFIDENT_FAKE_THRESHOLD:
         reason_parts.append(
             f"Classified FAKE with {claim.confidence:.0%} confidence -- flagged so it can be "
             f"debunked before it spreads further, independent of the reliability score below."
         )
-    elif claim.reliability_band == "LOW":
+    elif claim.reliability_band == "LOW" and claim.priority == "HIGH":
         reason_parts.append(
             "Could not be verified against official sources -- flagged for human review."
         )

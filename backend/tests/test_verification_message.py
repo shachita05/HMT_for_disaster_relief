@@ -70,3 +70,34 @@ def test_fact_check_takes_precedence_over_live_official_match():
     )
     assert "ReliefWeb" not in msg
     assert "False" in msg
+
+
+def test_high_social_corroboration_message():
+    msg = build_verification_message(
+        classification="UNVERIFIED",
+        confidence=0.3,
+        reliability_band="LOW",
+        has_live_official_match=False,
+        social_level="HIGH",
+        social_account_count=7,
+    )
+    assert "7 independent accounts" in msg
+    assert "relief-organization" in msg
+    # must explicitly disclaim consensus/verification, never assert it outright --
+    # see social_corroboration.py's docstring on why this is a volume signal only
+    assert "not a verified consensus" in msg.lower()
+
+
+def test_fact_check_false_wins_over_high_social_corroboration():
+    msg = build_verification_message(
+        classification="TRUE",
+        confidence=0.8,
+        reliability_band="HIGH",
+        has_live_official_match=False,
+        fact_check_verdict="FALSE",
+        fact_check_publisher="PolitiFact",
+        social_level="HIGH",
+        social_account_count=10,
+    )
+    assert "False" in msg
+    assert "independent accounts" not in msg

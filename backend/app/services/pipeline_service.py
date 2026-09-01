@@ -17,7 +17,7 @@ wired only in front of external-feed text (app/external_feeds/), never here.
 """
 import sys
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -30,13 +30,26 @@ from utils.reliability_scorer import score_reliability  # noqa: E402
 import logging
 
 from app.db.models import Claim, Location, Evidence
-from app.external_feeds import google_fact_check, newsapi_feed
+from app.external_feeds import google_fact_check, mastodon_feed, newsapi_feed
 from app.external_feeds.base import FeedNotConfiguredError
 from app.external_feeds.evidence_matcher import ClaimGeoContext, find_matches
 from app.external_feeds.scheduler import get_cached_events
+from app.services import social_corroboration
 from app.services.alerts_service import maybe_create_alert
 
 logger = logging.getLogger(__name__)
+
+
+def _topic_terms(result: dict) -> tuple[str | None, str | None]:
+    """(disaster_type, place) extracted from analyze_claim()'s result --
+    shared by _news_query (NewsAPI) and the Mastodon hashtag list below, so
+    both external searches key off the same signal instead of duplicating
+    this extraction logic."""
+    loc = result.get("location") or {}
+    place = loc.get("city") or loc.get("district") or loc.get("state")
+    disaster_type = result.get("disaster_type")
+    disaster_type = disaster_type if disaster_type and disaster_type != "None" else None
+    return disaster_type, place
 
 
 def _news_query(result: dict, text: str) -> str:
@@ -47,11 +60,7 @@ def _news_query(result: dict, text: str) -> str:
     built from what the pipeline already extracted (disaster type +
     location) matches real coverage far more often. Falls back to the raw
     text only if neither signal was extracted."""
-    loc = result.get("location") or {}
-    place = loc.get("city") or loc.get("district") or loc.get("state")
-    disaster_type = result.get("disaster_type")
-    disaster_type = disaster_type if disaster_type and disaster_type != "None" else None
-
+    disaster_type, place = _topic_terms(result)
     if disaster_type and place:
         return f"{disaster_type} {place}"
     if disaster_type or place:
@@ -214,6 +223,36 @@ def analyze_and_persist(
             )
         )
 
+    # Mastodon -- how many INDEPENDENT accounts are posting about the same
+    # topic, not a verdict and not "consensus" (no upvote/downvote exists
+    # on Mastodon -- see social_corroboration.py's docstring). Every
+    # matched post is persisted (not capped) so should_alert() and the
+    # verification message can derive the true unique-account count from
+    # what's actually stored, via the same shared helper.
+    disaster_type, place = _topic_terms(result)
+    hashtags = [t for t in (disaster_type, place) if t]
+    social_posts: list[mastodon_feed.SocialPost] = []
+    if hashtags:
+        try:
+            social_posts = mastodon_feed.search_hashtags(
+                hashtags, since=claim.submitted_at - timedelta(days=3)
+            )
+        except Exception:
+            logger.exception("Mastodon lookup failed for submitted claim")
+
+    for post in social_posts:
+        engagement = post.favourites_count + post.reblogs_count + post.replies_count
+        claim.evidence.append(
+            Evidence(
+                source=post.account_handle,
+                url=post.url,
+                evidence_type="social_corroboration",
+                description=f"{post.content_text} -- {engagement} engagement (via Mastodon)",
+                event_timestamp=post.created_at,
+                matched_confidence=0.5,
+            )
+        )
+
     reliability = score_reliability(
         misinfo_confidence=result["confidence_raw"],
         verification_matched=result["verification"]["matched"],
@@ -241,6 +280,20 @@ def analyze_and_persist(
         reliability.band = "LOW"
         reliability.reasons.append(
             "Reliability capped at LOW: an independent fact-checker's rating contradicts the model's verdict."
+        )
+
+    # High-volume independent social corroboration floors an otherwise-LOW
+    # band up to MEDIUM -- but never when a fact-checker has explicitly
+    # rated this claim FALSE (that still wins outright, checked here via
+    # fact_check_verdict rather than re-deriving from evidence since this
+    # runs before commit). Never downgrades an already-HIGH/MEDIUM band.
+    social_band, social_account_count = social_corroboration.social_level(claim.evidence)
+    if social_band == "HIGH" and fact_check_verdict != "FALSE" and reliability.band == "LOW":
+        reliability.score = max(reliability.score, 55)
+        reliability.band = "MEDIUM"
+        reliability.reasons.append(
+            f"Reliability raised to MEDIUM: {social_account_count} independent social media accounts "
+            "are posting about a matching event."
         )
 
     claim.reliability_score = reliability.score

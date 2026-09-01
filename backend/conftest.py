@@ -8,6 +8,9 @@ friends) the same way run.py already does.
 """
 import os
 import sys
+from unittest.mock import patch
+
+import pytest
 
 BACKEND_DIR = os.path.dirname(__file__)
 REPO_ROOT = os.path.join(BACKEND_DIR, "..")
@@ -35,3 +38,15 @@ os.environ.setdefault("ENABLE_FEED_SCHEDULER", "false")
 # test_google_fact_check.py / test_newsapi_feed.py.
 os.environ["GOOGLE_FACT_CHECK_API_KEY"] = ""
 os.environ["NEWS_API_KEY"] = ""
+
+# Mastodon is keyless -- there's no key to blank the way the two sources
+# above are handled, so every test gets an autouse mock returning no posts
+# by default instead. A test that wants specific Mastodon results opens
+# its own nested `patch(...)` for the same target, which correctly
+# overrides this one for the duration of its `with` block. See
+# test_mastodon_feed.py for the real search_hashtags() behavior tested
+# directly against a mocked requests.get.
+@pytest.fixture(autouse=True)
+def _no_real_mastodon_calls():
+    with patch("app.external_feeds.mastodon_feed.search_hashtags", return_value=[]):
+        yield

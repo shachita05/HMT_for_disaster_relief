@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, computed_field, field_validator
 
 from app.schemas.location import LocationOut
 from app.schemas.evidence import EvidenceOut
+from app.services import social_corroboration
 from app.services.verification_message import build_verification_message
 
 MAX_CLAIM_LENGTH = 2000
@@ -82,6 +83,8 @@ class ClaimDetail(ClaimOut):
             fact_check_verdict = "FALSE" if fact_check_evidence.evidence_type == "fact_check_false" else "TRUE"
             fact_check_publisher = fact_check_evidence.source
 
+        social_level, social_account_count = social_corroboration.social_level(self.evidence)
+
         return build_verification_message(
             classification=self.classification,
             confidence=self.confidence,
@@ -89,6 +92,8 @@ class ClaimDetail(ClaimOut):
             has_live_official_match=has_live_official_match,
             fact_check_verdict=fact_check_verdict,
             fact_check_publisher=fact_check_publisher,
+            social_level=social_level,
+            social_account_count=social_account_count,
         )
 
 

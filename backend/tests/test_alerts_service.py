@@ -1,7 +1,8 @@
 from app.db.base import Base
-from app.db.models import Claim
+from app.db.models import Claim, Evidence
 from app.db.session import SessionLocal, engine
 from app.services.alerts_service import ALERT_SCOPE_NOTE, maybe_create_alert
+from app.services.social_corroboration import HIGH_THRESHOLD
 
 
 def _claim(**overrides) -> Claim:
@@ -37,6 +38,32 @@ def test_unverifiable_high_priority_alerts_for_human_review():
     )
     assert alert is not None
     assert "flagged for human review" in alert.reason_text.lower()
+
+
+def _social_evidence(n: int) -> list[Evidence]:
+    return [
+        Evidence(evidence_type="social_corroboration", source=f"acct{i}@example.social", description="x")
+        for i in range(n)
+    ]
+
+
+def test_high_social_corroboration_alerts_even_at_low_priority():
+    claim = _claim(priority="LOW", priority_score=1, reliability_band="LOW", reliability_score=10)
+    claim.evidence = _social_evidence(HIGH_THRESHOLD)
+    alert = maybe_create_alert(claim)
+    assert alert is not None
+    assert "independent accounts" in alert.reason_text
+    assert "relief-organization" in alert.reason_text
+
+
+def test_fact_check_false_suppresses_social_corroboration_alert():
+    claim = _claim(priority="LOW", priority_score=1, reliability_band="LOW", reliability_score=10)
+    claim.evidence = _social_evidence(HIGH_THRESHOLD) + [
+        Evidence(evidence_type="fact_check_false", source="Alt News", description="False: ...")
+    ]
+    alert = maybe_create_alert(claim)
+    # LOW priority + LOW reliability + no confident-FAKE classification -> no alert path fires
+    assert alert is None
 
 
 def test_acknowledge_is_idempotent():
