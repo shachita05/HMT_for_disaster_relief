@@ -1,13 +1,12 @@
 """
 Explicit, env-var-ready stubs for sources that need real credentials this
 project does not have (see STATUS.md "What I need from you to keep
-going" -- Reddit OAuth and Telegram api_id/api_hash were never obtained;
-NewsAPI was never in scope to begin with but follows the identical
-pattern). Google Fact Check Tools API is the one exception -- a real key
-was obtained, so GoogleFactCheckFeedSource below is a real, working
-canary check (see google_fact_check.py for the actual per-claim search
-used by pipeline_service.py; this class only proves the key/connection
-work, for the /api/feeds/status dot).
+going" -- Reddit OAuth and Telegram api_id/api_hash were never obtained).
+Google Fact Check Tools API and NewsAPI are the two exceptions -- real
+keys were obtained, so their FeedSource classes below are real, working
+canary checks (see google_fact_check.py/newsapi_feed.py for the actual
+per-claim searches used by pipeline_service.py; these classes only prove
+the key/connection work, for the /api/feeds/status dot).
 
 Mirrors the existing NotImplementedError convention in
 src/misinformation/misinformation_classifier.py's MuRILClassifier/
@@ -18,7 +17,7 @@ naming the exact missing env var, and the caller (scheduler.py) records
 that as feed status "not_configured", visibly distinct from "error".
 """
 from app.config import settings
-from app.external_feeds import google_fact_check
+from app.external_feeds import google_fact_check, newsapi_feed
 from app.external_feeds.base import ExternalEvent, ExternalFeedSource, FeedNotConfiguredError
 
 
@@ -26,9 +25,13 @@ class NewsAPIFeedSource(ExternalFeedSource):
     name = "NewsAPI"
 
     def fetch(self) -> list[ExternalEvent]:
-        if not settings.news_api_key:
-            raise FeedNotConfiguredError("NEWS_API_KEY is not set -- see .env.example")
-        raise NotImplementedError("NewsAPI integration not written -- no key was available to test against")
+        # Real call (see newsapi_feed.canary_check) -- same pattern as
+        # GoogleFactCheckFeedSource below: never contributes ExternalEvents
+        # here, since this is a claim-text search API, not a geo/disaster
+        # event feed. Real per-claim results are fetched in
+        # pipeline_service.py instead.
+        newsapi_feed.canary_check()
+        return []
 
 
 class GoogleFactCheckFeedSource(ExternalFeedSource):

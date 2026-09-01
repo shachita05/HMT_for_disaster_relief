@@ -30,13 +30,33 @@ from utils.reliability_scorer import score_reliability  # noqa: E402
 import logging
 
 from app.db.models import Claim, Location, Evidence
-from app.external_feeds import google_fact_check
+from app.external_feeds import google_fact_check, newsapi_feed
 from app.external_feeds.base import FeedNotConfiguredError
 from app.external_feeds.evidence_matcher import ClaimGeoContext, find_matches
 from app.external_feeds.scheduler import get_cached_events
 from app.services.alerts_service import maybe_create_alert
 
 logger = logging.getLogger(__name__)
+
+
+def _news_query(result: dict, text: str) -> str:
+    """NewsAPI's /v2/everything does a strict all-terms match, not a fuzzy/
+    semantic one (unlike Google Fact Check's claims:search) -- passing a
+    full raw claim sentence very often returns zero results simply because
+    not every word co-occurs in any one article. A short, targeted query
+    built from what the pipeline already extracted (disaster type +
+    location) matches real coverage far more often. Falls back to the raw
+    text only if neither signal was extracted."""
+    loc = result.get("location") or {}
+    place = loc.get("city") or loc.get("district") or loc.get("state")
+    disaster_type = result.get("disaster_type")
+    disaster_type = disaster_type if disaster_type and disaster_type != "None" else None
+
+    if disaster_type and place:
+        return f"{disaster_type} {place}"
+    if disaster_type or place:
+        return disaster_type or place
+    return text
 
 
 def analyze_and_persist(
@@ -166,13 +186,41 @@ def analyze_and_persist(
         )
     fact_check_verdict = google_fact_check.aggregate_verdict(fact_check_results)
 
+    # NewsAPI -- corroborating evidence only, NOT a verdict (see
+    # newsapi_feed.py's module docstring: a relevance-search hit shows
+    # related news coverage exists, it does not confirm this specific
+    # claim). Folded into the same live-evidence count USGS/GDACS/ReliefWeb
+    # feed into, never into evidence_type_matches (no structured disaster
+    # type on a free-text news article), and never into the verification
+    # message/reliability override the way a fact-checker's explicit
+    # rating is above -- that stays fact-check-only, deliberately.
+    news_articles: list[newsapi_feed.NewsArticle] = []
+    try:
+        news_articles = newsapi_feed.search(_news_query(result, text))
+    except FeedNotConfiguredError:
+        pass
+    except Exception:
+        logger.exception("NewsAPI lookup failed for submitted claim")
+
+    for article in news_articles[:3]:
+        claim.evidence.append(
+            Evidence(
+                source=article.source_name,
+                url=article.url,
+                evidence_type="news_article_match",
+                description=f"{article.title} (via NewsAPI)",
+                event_timestamp=article.published_at,
+                matched_confidence=0.6,  # a relevance-search hit, not a verified/geo-matched event
+            )
+        )
+
     reliability = score_reliability(
         misinfo_confidence=result["confidence_raw"],
         verification_matched=result["verification"]["matched"],
         verification_similarity=result["verification"]["similarity_raw"],
         verification_threshold=MATCH_THRESHOLD,
-        live_evidence_count=len(live_matches),
-        live_evidence_source_count=len({e.source for e in live_matches}),
+        live_evidence_count=len(live_matches) + len(news_articles),
+        live_evidence_source_count=len({e.source for e in live_matches} | {a.source_name for a in news_articles}),
         location_level=location_level,
         evidence_type_matches=evidence_type_matches,
     )

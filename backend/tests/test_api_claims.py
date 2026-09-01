@@ -9,6 +9,7 @@ from app.main import app
 from app.db.base import Base
 from app.db.session import engine
 from app.external_feeds.google_fact_check import FactCheckResult
+from app.external_feeds.newsapi_feed import NewsArticle
 
 client = TestClient(app)
 
@@ -78,6 +79,26 @@ def test_fact_check_false_caps_reliability_low_without_changing_classification()
     fact_check_evidence = [e for e in body["evidence"] if e["evidence_type"] == "fact_check_false"]
     assert len(fact_check_evidence) == 1
     assert fact_check_evidence[0]["source"] == "PolitiFact"
+
+
+def test_newsapi_article_becomes_evidence_without_overriding_message():
+    article = NewsArticle(
+        source_name="The Hindu",
+        title="Heavy rains cause flooding in Bengaluru",
+        url="https://example.com/article1",
+        published_at=None,
+    )
+    with patch("app.external_feeds.newsapi_feed.search", return_value=[article]):
+        resp = client.post("/api/claims", json={"text": SAMPLE})
+    assert resp.status_code == 201
+    body = resp.json()
+
+    news_evidence = [e for e in body["evidence"] if e["evidence_type"] == "news_article_match"]
+    assert len(news_evidence) == 1
+    assert news_evidence[0]["source"] == "The Hindu"
+    # A NewsAPI hit alone must never claim official/fact-checked confirmation.
+    assert "official sources" not in body["official_verification_message"]
+    assert "fact-checker" not in body["official_verification_message"].lower()
 
 
 def test_api_matches_cli_pipeline_output():
