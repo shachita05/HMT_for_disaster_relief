@@ -99,7 +99,8 @@ export function ClaimAnalysisView({ result }: { result: ClaimDetail }) {
         )}
         <p className="muted" style={{ fontSize: 12, marginTop: 12, marginBottom: 0 }}>
           Verification status: {result.verification_status === "matched" ? "matched against stored IFND corpus" : "no stored-corpus match"} — checked
-          against a stored dataset and periodic public feeds (USGS, GDACS), not live NDMA/IMD/PIB integration.
+          against a stored dataset, live fact-checker/news/social-media lookups (Google Fact Check, NewsAPI,
+          Mastodon), and periodic disaster feeds (USGS, GDACS) — not live NDMA/IMD/PIB integration.
         </p>
       </div>
     </div>

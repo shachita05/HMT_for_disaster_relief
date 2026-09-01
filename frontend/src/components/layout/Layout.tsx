@@ -8,8 +8,8 @@ export function Layout({ children }: { children: ReactNode }) {
       <NavBar />
       <main>{children}</main>
       <p className="footer-note">
-        HMT is a disaster information analysis and misinformation tracking system -- a BE capstone research
-        prototype, not a live monitoring service or an emergency-response system.
+        HMT is a disaster information analysis and misinformation tracking system that checks each claim live
+        against fact-checkers, news, and social media -- a BE capstone project, not an emergency-response system.
       </p>
     </>
   );
