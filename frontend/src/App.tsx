@@ -7,7 +7,6 @@ import { Dashboard } from "./pages/Dashboard";
 import { Claims } from "./pages/Claims";
 import { ClaimDetails } from "./pages/ClaimDetails";
 import { Alerts } from "./pages/Alerts";
-import { About } from "./pages/About";
 import { LoadingSpinner } from "./components/common/LoadingSpinner";
 
 // Lazy-loaded: Leaflet is the single heaviest dependency in the bundle
@@ -32,7 +31,6 @@ export function App() {
         <Route path="/claims" element={<Claims />} />
         <Route path="/claims/:id" element={<ClaimDetails />} />
         <Route path="/alerts" element={<Alerts />} />
-        <Route path="/about" element={<About />} />
       </Routes>
     </Layout>
   );

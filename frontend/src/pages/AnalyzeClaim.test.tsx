@@ -36,6 +36,8 @@ const SAMPLE_RESULT: ClaimDetail = {
   reason: "The claim matches 'Flood'-type disaster keywords.",
   locations: [],
   evidence: [],
+  official_verification_message: "Partially supported -- classified TRUE by the model, but independent official confirmation is limited.",
+  overall_verdict: "TRUE",
 };
 
 function renderPage() {
@@ -62,7 +64,7 @@ describe("AnalyzeClaim page", () => {
     await user.type(screen.getByPlaceholderText(/heavy rainfall/i), "Heavy rainfall has caused flooding");
     await user.click(screen.getByRole("button", { name: /^analyze$/i }));
 
-    await waitFor(() => expect(screen.getByText(/Flood.*model confidence/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Flood.*78% confidence/i)).toBeInTheDocument());
     expect(screen.getByText("TRUE")).toBeInTheDocument();
   });
 

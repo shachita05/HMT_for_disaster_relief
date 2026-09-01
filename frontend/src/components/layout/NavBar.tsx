@@ -8,7 +8,6 @@ const LINKS = [
   { to: "/map", label: "Map" },
   { to: "/claims", label: "Claims" },
   { to: "/alerts", label: "Alerts" },
-  { to: "/about", label: "About" },
 ];
 
 export function NavBar() {

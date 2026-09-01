@@ -18,6 +18,7 @@ import threading
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
+from app.external_feeds import mastodon_feed
 from app.external_feeds.base import ExternalEvent, ExternalFeedSource, FeedNotConfiguredError
 from app.external_feeds.feed_status import registry
 from app.external_feeds.gdacs_feed import GDACSFeedSource
@@ -65,6 +66,16 @@ def refresh_all() -> list[ExternalEvent]:
         except Exception:
             logger.exception("unexpected error polling stub feed %s", source.name)
             registry.record_error(source.name, "unexpected error -- see server logs")
+
+    # Mastodon isn't a stub (keyless, no "not_configured" state) and isn't
+    # a geo-event feed like REAL_SOURCES above (it's a per-claim hashtag
+    # lookup, see mastodon_feed.py's module docstring) -- this canary call
+    # exists purely to keep its /api/feeds/status entry current.
+    try:
+        mastodon_feed.canary_check()
+    except Exception:
+        logger.exception("unexpected error polling Mastodon")
+        registry.record_error("Mastodon", "unexpected error -- see server logs")
 
     with _lock:
         _event_cache.clear()
