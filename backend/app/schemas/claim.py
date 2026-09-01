@@ -64,11 +64,31 @@ class ClaimDetail(ClaimOut):
     @property
     def official_verification_message(self) -> str:
         has_live_official_match = any(e.evidence_type == "live_feed_match" for e in self.evidence)
+
+        # evidence_type carries the normalized fact-check rating directly
+        # (fact_check_false | fact_check_true | fact_check_mixed) -- set by
+        # pipeline_service.py -- rather than needing to re-parse free text
+        # here, and rather than adding a new Claim column (see db/models.py
+        # docstring on why schema changes are avoided).
+        # FALSE preferred over TRUE if both are present among multiple
+        # fact-checker reviews -- mirrors google_fact_check.aggregate_verdict's
+        # own FALSE-beats-TRUE precedence.
+        fact_check_evidence = next(
+            (e for e in self.evidence if e.evidence_type == "fact_check_false"), None
+        ) or next((e for e in self.evidence if e.evidence_type == "fact_check_true"), None)
+        fact_check_verdict = None
+        fact_check_publisher = None
+        if fact_check_evidence is not None:
+            fact_check_verdict = "FALSE" if fact_check_evidence.evidence_type == "fact_check_false" else "TRUE"
+            fact_check_publisher = fact_check_evidence.source
+
         return build_verification_message(
             classification=self.classification,
             confidence=self.confidence,
             reliability_band=self.reliability_band,
             has_live_official_match=has_live_official_match,
+            fact_check_verdict=fact_check_verdict,
+            fact_check_publisher=fact_check_publisher,
         )
 
 

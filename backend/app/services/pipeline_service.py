@@ -27,10 +27,16 @@ from location.geocode_lookup import get_coordinates  # noqa: E402
 from verification.source_verifier import MATCH_THRESHOLD  # noqa: E402
 from utils.reliability_scorer import score_reliability  # noqa: E402
 
+import logging
+
 from app.db.models import Claim, Location, Evidence
+from app.external_feeds import google_fact_check
+from app.external_feeds.base import FeedNotConfiguredError
 from app.external_feeds.evidence_matcher import ClaimGeoContext, find_matches
 from app.external_feeds.scheduler import get_cached_events
 from app.services.alerts_service import maybe_create_alert
+
+logger = logging.getLogger(__name__)
 
 
 def analyze_and_persist(
@@ -133,6 +139,33 @@ def analyze_and_persist(
             )
         )
 
+    # Independent fact-checker lookup (Google Fact Check Tools API) --
+    # never allowed to break claim analysis if unconfigured/unreachable,
+    # same "external machinery must not take down the request" rule as
+    # everything else in external_feeds/. See google_fact_check.py for why
+    # this is a per-claim call rather than the scheduler's cached feeds.
+    fact_check_results: list[google_fact_check.FactCheckResult] = []
+    try:
+        fact_check_results = google_fact_check.search(text)
+    except FeedNotConfiguredError:
+        pass
+    except Exception:
+        logger.exception("Google Fact Check lookup failed for submitted claim")
+
+    for fc in fact_check_results:
+        if fc.normalized_rating not in ("FALSE", "TRUE", "MIXED"):
+            continue
+        claim.evidence.append(
+            Evidence(
+                source=fc.publisher,
+                url=fc.url,
+                evidence_type=f"fact_check_{fc.normalized_rating.lower()}",
+                description=f"{fc.textual_rating}: {fc.title} (via Google Fact Check Tools API)",
+                matched_confidence=1.0,
+            )
+        )
+    fact_check_verdict = google_fact_check.aggregate_verdict(fact_check_results)
+
     reliability = score_reliability(
         misinfo_confidence=result["confidence_raw"],
         verification_matched=result["verification"]["matched"],
@@ -143,6 +176,25 @@ def analyze_and_persist(
         location_level=location_level,
         evidence_type_matches=evidence_type_matches,
     )
+
+    # A real fact-checker's rating outranks the model's own verdict (see
+    # verification_message.py's module docstring for the same precedence
+    # rule applied to the headline message). Never rewrite
+    # claim.classification itself -- that would misrepresent what the ML
+    # model actually predicted; only the reliability band is overridden,
+    # capped into LOW so should_alert() flags it for human review too.
+    contradicts_fact_check = (
+        fact_check_verdict == "FALSE" and claim.classification != "FAKE"
+    ) or (
+        fact_check_verdict == "TRUE" and claim.classification == "FAKE"
+    )
+    if contradicts_fact_check:
+        reliability.score = min(reliability.score, 30)
+        reliability.band = "LOW"
+        reliability.reasons.append(
+            "Reliability capped at LOW: an independent fact-checker's rating contradicts the model's verdict."
+        )
+
     claim.reliability_score = reliability.score
     claim.reliability_band = reliability.band
     claim.reliability_reasons = reliability.reasons

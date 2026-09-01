@@ -79,10 +79,12 @@ python3 run.py "Heavy rainfall has caused severe flooding in Whitefield, Bengalu
 | Stored-corpus verification (`src/verification/`) | Real, but checks **our own stored IFND corpus** via cosine similarity — no live NDMA/IMD/PIB integration |
 | Live evidence feeds — USGS, GDACS (`backend/app/external_feeds/`) | **Real**, no API key, polled every 15 minutes |
 | Live evidence feed — ReliefWeb | Code and parsing are real (tested via mocks); **inactive** — its API requires an approved `appname` we don't have (see `DATA_SOURCES.md`) |
-| Live evidence feeds — NewsAPI, Google Fact Check, Reddit, Telegram | **Future Enhancement** — credentials were never obtained (see `STATUS.md`) |
+| Fact-check lookup — Google Fact Check Tools API (`backend/app/external_feeds/google_fact_check.py`) | **Real** — a per-claim search against real fact-checking publishers (PolitiFact, AFP, BOOM, Alt News, The Quint, etc.), called live on every claim submission. A FALSE/TRUE rating from this API outranks the ML model's own verdict in the verification message and caps `reliability_score` into LOW on disagreement (never rewrites `classification` itself — that stays the model's raw, honest output) |
+| Live evidence feeds — NewsAPI, Reddit, Telegram | **Future Enhancement** — credentials were never obtained (see `STATUS.md`) |
 | Reliability score (`src/utils/reliability_scorer.py`) | Real, rule-based and fully documented — not a trained model |
 | Priority score (`src/utils/priority_scorer.py`) | Real, rule-based, additive, fully documented |
-| Alerts (`backend/app/services/alerts_service.py`) | Real — generated automatically for HIGH-priority + well-supported (or confidently-fake) claims. Never contacts emergency services. |
+| Verification verdict message (`backend/app/services/verification_message.py`) | Real — one plain-English sentence synthesized from the fact-check rating, live official-feed matches, and reliability band, shown at the top of every claim's analysis |
+| Alerts (`backend/app/services/alerts_service.py`) | Real — generated automatically for HIGH-priority + well-supported (or confidently-fake, or genuinely unverifiable) claims. Never contacts emergency services. |
 | Backend API (`backend/`) | Real — FastAPI + SQLAlchemy + SQLite, wraps the pipeline above, persists every claim/location/evidence/alert |
 | Frontend dashboard (`frontend/`) | Real — React + TypeScript SPA, 8 pages, charts, a real Leaflet/OpenStreetMap map. (The project's original Streamlit dashboard has been removed now that this replaces it.) |
 | MuRIL / IndicBERT / LLM misinformation classifiers | `NotImplementedError` stubs — needs labeled multilingual data that doesn't exist yet |
