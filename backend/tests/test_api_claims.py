@@ -129,7 +129,11 @@ def test_high_social_corroboration_floors_reliability_and_alerts():
     assert "not a verified consensus" in body["official_verification_message"].lower()
 
 
-def test_fact_check_false_wins_over_high_social_corroboration_end_to_end():
+def test_fact_check_false_and_high_social_corroboration_both_shown_end_to_end():
+    # Real scenario that surfaced this: a generic query like "floods in
+    # nepal" can match a fact-checker's review of one specific debunked
+    # video while real social/news evidence separately confirms the
+    # underlying event is genuinely happening. Neither should be hidden.
     posts = [
         SocialPost(
             id=str(i),
@@ -156,9 +160,15 @@ def test_fact_check_false_wins_over_high_social_corroboration_end_to_end():
     assert resp.status_code == 201
     body = resp.json()
 
+    # Reliability stays cautious (fact-check found something worth doubting)...
     assert body["reliability_band"] == "LOW"
-    assert "independent accounts" not in body["official_verification_message"]
+    # ...but the message shows both signals rather than hiding the social one.
+    assert "5 independent accounts" in body["official_verification_message"]
     assert "False" in body["official_verification_message"]
+    assert "PolitiFact" in body["official_verification_message"]
+
+    alerts = client.get("/api/alerts", params={"limit": 50}).json()["items"]
+    assert any(a["claim_id"] == body["id"] for a in alerts)
 
 
 def test_api_matches_cli_pipeline_output():

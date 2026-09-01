@@ -34,12 +34,3 @@ def social_level(evidence) -> tuple[str, int]:
     if count >= SOME_THRESHOLD:
         return "SOME", count
     return "NONE", count
-
-
-def has_fact_check_false(evidence) -> bool:
-    """A real fact-checker's False rating always outranks social-media
-    volume (see verification_message.py's precedence rule) -- checked
-    independently here so alerts_service.py's should_alert() holds that
-    precedence even though it only ever sees the persisted claim, not
-    pipeline_service.py's local fact_check_verdict variable."""
-    return any(e.evidence_type == "fact_check_false" for e in evidence)

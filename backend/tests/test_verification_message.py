@@ -88,7 +88,11 @@ def test_high_social_corroboration_message():
     assert "not a verified consensus" in msg.lower()
 
 
-def test_fact_check_false_wins_over_high_social_corroboration():
+def test_fact_check_false_and_high_social_corroboration_both_shown():
+    # Neither signal should silently hide the other -- a fact-checker
+    # debunking one specific piece of viral content doesn't mean the
+    # broader event isn't real, and vice versa. See this module's
+    # docstring for the real "floods in nepal" case that surfaced this.
     msg = build_verification_message(
         classification="TRUE",
         confidence=0.8,
@@ -100,4 +104,21 @@ def test_fact_check_false_wins_over_high_social_corroboration():
         social_account_count=10,
     )
     assert "False" in msg
+    assert "PolitiFact" in msg
+    assert "10 independent accounts" in msg
+
+
+def test_fact_check_false_alone_still_uses_original_wording():
+    # without high social corroboration, the simpler single-signal message stays
+    msg = build_verification_message(
+        classification="TRUE",
+        confidence=0.8,
+        reliability_band="HIGH",
+        has_live_official_match=False,
+        fact_check_verdict="FALSE",
+        fact_check_publisher="PolitiFact",
+        social_level="SOME",
+        social_account_count=2,
+    )
+    assert "has rated this claim False" in msg
     assert "independent accounts" not in msg

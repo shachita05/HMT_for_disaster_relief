@@ -13,19 +13,29 @@ piece it together from the separate classification/reliability/evidence
 panels.
 
 Precedence, highest first:
-1. An independent fact-checker's rating (PolitiFact, AFP, BOOM, etc.) --
-   stronger evidence than this project's own ML model or anything else
-   here, so it's checked first and its wording explicitly calls out a
-   contradiction with the model's own verdict rather than silently
-   overriding it.
-2. High-volume independent social-media corroboration (Mastodon) -- how
-   many INDEPENDENT ACCOUNTS are posting about the same topic. This is
-   NEVER worded as "verified" or "consensus": Mastodon has no
-   upvote/downvote, so a post count is a proxy for how much this is
-   circulating, not for whether people agree it's true. Suppressed
-   entirely when a fact-checker has rated the claim False -- see
-   social_corroboration.py's has_fact_check_false().
-3. Everything else (live official-feed match, confident-FAKE-with-no-
+1. Fact-check FALSE + HIGH social corroboration BOTH present -- shown
+   together, neither hides the other. Discovered from real testing: Google
+   Fact Check's search is a relevance search, not an exact match, so a
+   vague/generic submitted claim (e.g. "floods in nepal") can surface a
+   real fact-checker's review of a SPECIFIC piece of misinformation (an
+   old video reused, a fake rescue story) that is only loosely related to
+   the submitted text -- while separately, real social-media volume and
+   news coverage confirm the underlying event itself is genuinely
+   happening. These are not necessarily a contradiction: the event can be
+   real AND a specific piece of viral content about it can be fake. Silently
+   letting fact-check win outright (the old behavior) buried real
+   corroborating evidence and implied the whole event was false when only
+   some specific content about it was.
+2. Fact-check verdict alone (FALSE or TRUE, no high social corroboration)
+   -- stronger evidence than this project's own ML model or anything else
+   here, so its wording explicitly calls out a contradiction with the
+   model's own verdict rather than silently overriding it.
+3. High-volume independent social-media corroboration (Mastodon) alone --
+   how many INDEPENDENT ACCOUNTS are posting about the same topic. NEVER
+   worded as "verified" or "consensus": Mastodon has no upvote/downvote,
+   so a post count is a proxy for how much this is circulating, not for
+   whether people agree it's true.
+4. Everything else (live official-feed match, confident-FAKE-with-no-
    record, LOW-reliability-flagged-for-review, partial support).
 """
 from app.services.alerts_service import CONFIDENT_FAKE_THRESHOLD
@@ -42,6 +52,14 @@ def build_verification_message(
     social_account_count: int = 0,
 ) -> str:
     publisher_note = f" ({fact_check_publisher})" if fact_check_publisher else ""
+
+    if fact_check_verdict == "FALSE" and social_level == "HIGH":
+        return (
+            f"A fact-checker{publisher_note} found specific debunked content related to this topic "
+            f"(rated False), but {social_account_count} independent accounts and news coverage separately "
+            "indicate a real, ongoing event -- these may describe different specific claims about the same "
+            "broader situation. Flagged for review; see the evidence panel for details."
+        )
 
     if fact_check_verdict == "FALSE":
         msg = f"An independent fact-checker{publisher_note} has rated this claim False."
