@@ -2,6 +2,12 @@
 // codegen step for a capstone-scope project; see ARCHITECTURE.md).
 
 export type Verdict = "TRUE" | "FAKE" | "UNVERIFIED";
+// Distinct from Verdict: a resolved answer combining classification with
+// fact-check/social/live evidence (see verification_message.compute_overall_verdict),
+// only present on ClaimDetail. DISPUTED covers cases Verdict alone can't
+// express -- a fact-checker debunked specific content while independent
+// evidence separately confirms the underlying event is real.
+export type OverallVerdict = Verdict | "DISPUTED";
 export type PriorityLevel = "HIGH" | "MEDIUM" | "LOW";
 export type ReliabilityBand = "HIGH" | "MEDIUM" | "LOW";
 
@@ -57,6 +63,8 @@ export interface ClaimDetail extends ClaimOut {
   reason: string | null;
   locations: LocationOut[];
   evidence: EvidenceOut[];
+  official_verification_message: string;
+  overall_verdict: OverallVerdict;
 }
 
 export interface ClaimListResponse {

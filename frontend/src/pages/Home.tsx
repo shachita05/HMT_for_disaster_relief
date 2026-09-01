@@ -30,11 +30,11 @@ export function Home() {
         />
         <Feature
           title="Evidence, kept separate"
-          body="Model predictions and independently-sourced evidence (stored corpus + live feeds) are always shown as distinct, never merged."
+          body="Model predictions and independently-sourced evidence (fact-checkers, news, social media, disaster feeds) are always shown as distinct, never merged."
         />
         <Feature
           title="Honest about scope"
-          body="This is a research prototype with periodic/near-real-time monitoring — not a live tracker, and not a replacement for official emergency services."
+          body="Every claim is checked live against real fact-checking, news, and social media sources — this is a research prototype, not a replacement for official emergency services."
         />
       </div>
     </div>

@@ -101,7 +101,7 @@ function FeedStatusStrip({ feeds }: { feeds: FeedHealth[] }) {
   };
   return (
     <div className="card" style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", fontSize: 13 }}>
-      <span className="muted" style={{ fontSize: 12 }}>Live feed status (periodic monitoring, not real-time):</span>
+      <span className="muted" style={{ fontSize: 12 }}>Live feed status (background sources refresh every 15 min; each claim also runs live checks):</span>
       {feeds.map((f) => (
         <span key={f.name} style={{ display: "flex", alignItems: "center", gap: 6 }} title={f.last_error ?? undefined}>
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor[f.status], display: "inline-block" }} />

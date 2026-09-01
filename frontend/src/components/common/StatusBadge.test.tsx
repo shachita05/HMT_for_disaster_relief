@@ -21,4 +21,10 @@ describe("StatusBadge", () => {
     const badge = screen.getByText("UNVERIFIED");
     expect(badge.closest(".badge")).toHaveClass("badge-warning");
   });
+
+  it("renders DISPUTED with its own styling, distinct from UNVERIFIED/FAKE", () => {
+    render(<StatusBadge verdict="DISPUTED" />);
+    const badge = screen.getByText("DISPUTED");
+    expect(badge.closest(".badge")).toHaveClass("badge-serious");
+  });
 });
