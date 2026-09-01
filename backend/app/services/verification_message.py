@@ -41,6 +41,45 @@ Precedence, highest first:
 from app.services.alerts_service import CONFIDENT_FAKE_THRESHOLD
 
 
+def compute_overall_verdict(
+    classification: str,
+    confidence: float,
+    has_live_official_match: bool,
+    fact_check_verdict: str | None = None,
+    social_level: str | None = None,
+) -> str:
+    """TRUE | FAKE | DISPUTED | UNVERIFIED -- a single resolved answer for
+    when to show the user ONE final verdict, distinct from `classification`
+    (which always stays the model's raw, unmodified prediction -- never
+    overwritten, never even read by callers as "the" answer on its own).
+
+    Added because of a real, observed UX problem: for a generic query like
+    "floods in nepal", the model's own confidence lands below its
+    TRUE/FAKE threshold (reports UNVERIFIED) while fact-check + social +
+    news evidence gathered afterward paints a much clearer picture -- a
+    user reasonably expects ONE headline answer, not five separate signals
+    to reconcile themselves. `classification` stays visible as secondary
+    detail (see ClaimAnalysisView.tsx) precisely so this resolved verdict
+    is never mistaken for "what the model predicted."
+
+    Mirrors build_verification_message()'s precedence order below --
+    keep the two in sync if either changes.
+    """
+    if fact_check_verdict == "FALSE" and social_level == "HIGH":
+        return "DISPUTED"
+    if fact_check_verdict == "FALSE":
+        return "FAKE"
+    if fact_check_verdict == "TRUE":
+        return "TRUE"
+    if classification == "FAKE" and confidence >= CONFIDENT_FAKE_THRESHOLD:
+        return "FAKE"
+    if classification == "TRUE" and has_live_official_match:
+        return "TRUE"
+    if social_level == "HIGH":
+        return "TRUE"
+    return classification if classification in ("TRUE", "FAKE") else "UNVERIFIED"
+
+
 def build_verification_message(
     classification: str,
     confidence: float,

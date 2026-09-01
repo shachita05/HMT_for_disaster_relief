@@ -11,14 +11,14 @@ export function ClaimAnalysisView({ result }: { result: ClaimDetail }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div className="card">
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-          <StatusBadge verdict={result.classification} />
+          <StatusBadge verdict={result.overall_verdict} />
           <PriorityBadge level={result.priority} />
-          <span className="muted" style={{ fontSize: 13, alignSelf: "center" }}>
-            {result.disaster_type} · {(result.confidence * 100).toFixed(0)}% model confidence
-          </span>
         </div>
         <p style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 600 }}>{result.official_verification_message}</p>
-        <p className="muted" style={{ margin: "0 0 10px", fontSize: 14 }}>{result.reason}</p>
+        <p className="muted" style={{ margin: "0 0 10px", fontSize: 13 }}>
+          Model's own prediction: {result.classification} ({result.disaster_type} ·{" "}
+          {(result.confidence * 100).toFixed(0)}% confidence) — {result.reason}
+        </p>
         <ReliabilityMeter score={result.reliability_score} band={result.reliability_band} />
       </div>
 

@@ -1,4 +1,4 @@
-from app.services.verification_message import build_verification_message
+from app.services.verification_message import build_verification_message, compute_overall_verdict
 
 
 def test_true_with_live_official_match_is_confirmed():
@@ -122,3 +122,48 @@ def test_fact_check_false_alone_still_uses_original_wording():
     )
     assert "has rated this claim False" in msg
     assert "independent accounts" not in msg
+
+
+def test_overall_verdict_disputed_when_fact_check_false_and_high_social():
+    # the exact real case that motivated this field: "floods in nepal"
+    verdict = compute_overall_verdict(
+        classification="UNVERIFIED", confidence=0.57, has_live_official_match=False,
+        fact_check_verdict="FALSE", social_level="HIGH",
+    )
+    assert verdict == "DISPUTED"
+
+
+def test_overall_verdict_fake_when_fact_check_false_alone():
+    verdict = compute_overall_verdict(
+        classification="TRUE", confidence=0.8, has_live_official_match=True,
+        fact_check_verdict="FALSE", social_level=None,
+    )
+    assert verdict == "FAKE"
+
+
+def test_overall_verdict_true_when_fact_check_true():
+    verdict = compute_overall_verdict(
+        classification="FAKE", confidence=0.9, has_live_official_match=False,
+        fact_check_verdict="TRUE", social_level=None,
+    )
+    assert verdict == "TRUE"
+
+
+def test_overall_verdict_true_when_model_unverified_but_high_social_alone():
+    verdict = compute_overall_verdict(
+        classification="UNVERIFIED", confidence=0.5, has_live_official_match=False,
+        fact_check_verdict=None, social_level="HIGH",
+    )
+    assert verdict == "TRUE"
+
+
+def test_overall_verdict_falls_back_to_classification_when_no_extra_signal():
+    assert compute_overall_verdict(
+        classification="UNVERIFIED", confidence=0.5, has_live_official_match=False,
+    ) == "UNVERIFIED"
+    assert compute_overall_verdict(
+        classification="FAKE", confidence=0.4, has_live_official_match=False,
+    ) == "FAKE"
+    assert compute_overall_verdict(
+        classification="TRUE", confidence=0.4, has_live_official_match=False,
+    ) == "TRUE"
