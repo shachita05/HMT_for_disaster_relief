@@ -1,17 +1,21 @@
 import type { ReactNode } from "react";
 import { NavBar } from "./NavBar";
+import { BottomNav } from "./BottomNav";
 import "./layout.css";
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
-    <>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
       <NavBar />
-      <main>{children}</main>
-      <p className="footer-note">
-        HMT is a disaster information analysis and misinformation tracking system that checks each claim live
-        against fact-checkers, news, and social media -- a BE capstone project, not an emergency-response system.
-      </p>
-    </>
+      <main style={{ flex: 1 }}>{children}</main>
+      <footer className="footer">
+        <p className="footer-note">
+          HMT is a disaster information analysis and misinformation tracking system that checks each claim live
+          against fact-checkers, news, and social media -- a BE capstone project, not an emergency-response system.
+        </p>
+      </footer>
+      <BottomNav />
+    </div>
   );
 }
 

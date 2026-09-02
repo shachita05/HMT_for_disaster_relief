@@ -37,9 +37,9 @@ export function MapPage() {
           <option value="LOW">Low priority</option>
         </select>
         <div style={{ marginLeft: "auto", display: "flex", gap: 14, fontSize: 13, alignItems: "center" }}>
-          <Legend color="#d03b3b" label="High" />
-          <Legend color="#fab219" label="Medium" />
-          <Legend color="#0ca30c" label="Low" />
+          <Legend color="#ef4444" label="High" />
+          <Legend color="#ffb100" label="Medium" />
+          <Legend color="#10b981" label="Low" />
         </div>
       </div>
 

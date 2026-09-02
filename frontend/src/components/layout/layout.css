@@ -1,5 +1,5 @@
 .navbar {
-  background: var(--surface-card);
+  background: var(--surface-1);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -7,13 +7,14 @@
 }
 
 .navbar-inner {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 20px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 28px;
-  height: 60px;
+  height: 64px;
 }
 
 .navbar-brand {
@@ -21,23 +22,19 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: var(--text-primary);
+  color: var(--primary);
+  font-family: var(--font-heading);
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .navbar-brand-mark {
-  background: var(--series-1);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  padding: 4px 8px;
-  border-radius: 6px;
+  font-size: 1.3rem;
+  line-height: 1;
 }
 
 .navbar-brand-text {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }
 
 @media (max-width: 760px) {
@@ -46,29 +43,33 @@
 
 .navbar-links {
   display: flex;
-  gap: 4px;
+  gap: 22px;
   overflow-x: auto;
-  flex: 1;
+}
+
+@media (max-width: 760px) {
+  .navbar-links { display: none; }
 }
 
 .navbar-link {
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
+  padding: 4px 2px 6px;
+  border-bottom: 2px solid transparent;
   white-space: nowrap;
+  transition: color 0.15s;
 }
 
 .navbar-link:hover {
-  background: var(--surface-2);
-  color: var(--text-primary);
+  color: var(--primary);
 }
 
 .navbar-link-active {
-  color: var(--series-1);
-  font-weight: 700;
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
 }
 
 .page-header {
@@ -88,9 +89,65 @@
   line-height: 1.5;
 }
 
+.footer {
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
 .footer-note {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.8rem;
-  padding: 32px 20px 8px;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  padding: 32px 20px;
+}
+
+/* Mobile bottom tab bar -- hidden on desktop, replaces the horizontal
+   nav links (also hidden below 760px, see .navbar-links) so there's
+   always exactly one navigation surface visible. */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 30;
+    background: var(--surface-1);
+    border-top: 1px solid var(--border);
+    padding: 6px 2px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  /* leave room so page content isn't hidden behind the fixed bar */
+  body { padding-bottom: 58px; }
+}
+
+.bottom-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+}
+
+.bottom-nav-link-active {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.bottom-nav-icon {
+  font-size: 1.3rem;
+  line-height: 1;
 }

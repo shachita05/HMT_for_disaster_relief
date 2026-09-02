@@ -6,16 +6,16 @@ export function Home() {
     <div className="page">
       <PageHeader
         title="Hyperlocal Misinformation Tracker for Disaster Relief"
-        subtitle="A disaster information analysis and misinformation tracking system — built for a BE capstone project."
+        subtitle="An intelligent platform for analyzing, verifying, and tracking disaster-related information to support reliable and timely relief decisions."
       />
 
       <div className="card" style={{ marginBottom: 24 }}>
         <p style={{ marginTop: 0 }}>
-          During disasters, large volumes of information circulate online — some genuine, some outdated,
-          exaggerated, or entirely false. Misinformation can misdirect relief resources, cause panic, and delay
-          genuine response efforts. HMT analyzes disaster-related text and produces a disaster type, a resolved
-          location, a misinformation classification, evidence, a reliability score, and a priority level — so
-          relief organizations can triage information rather than treat every report as equally trustworthy.
+          During disasters, critical information spreads rapidly across online platforms, making it difficult to
+          distinguish genuine reports from misinformation. HMT analyzes disaster-related claims using NLP and
+          machine learning to identify the disaster type, extract the affected location, assess misinformation
+          risk, and evaluate supporting evidence. The system generates reliability and priority scores to help
+          relief organizations identify credible information and focus their response efforts.
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link to="/analyze" className="btn btn-primary">Analyze a claim</Link>
@@ -25,16 +25,16 @@ export function Home() {
 
       <div className="grid grid-cols-3">
         <Feature
-          title="Not merely TRUE/FALSE"
-          body="Claims are classified TRUE, FAKE, or UNVERIFIED — the model does not force a binary call when its own confidence is low."
+          title="Beyond Binary Classification"
+          body="HMT classifies disaster-related claims as TRUE, FAKE, or UNVERIFIED, while providing confidence scores to indicate the certainty of each prediction."
         />
         <Feature
-          title="Evidence, kept separate"
-          body="Model predictions and independently-sourced evidence (fact-checkers, news, social media, disaster feeds) are always shown as distinct, never merged."
+          title="Evidence-Based Verification"
+          body="Model predictions are presented separately from independently sourced evidence, including trusted news, fact-checking sources, and disaster information feeds."
         />
         <Feature
-          title="Honest about scope"
-          body="Every claim is checked live against real fact-checking, news, and social media sources — this is a research prototype, not a replacement for official emergency services."
+          title="Actionable Disaster Intelligence"
+          body="Each analyzed claim is enriched with location, disaster type, reliability, and priority information to help identify reports that may require further verification or relief attention."
         />
       </div>
     </div>

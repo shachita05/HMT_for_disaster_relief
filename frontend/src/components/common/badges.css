@@ -16,12 +16,8 @@
 }
 
 .badge-warning {
-  color: #8a5a00;
-  background: color-mix(in srgb, var(--status-warning) 22%, transparent);
-}
-
-@media (prefers-color-scheme: dark) {
-  .badge-warning { color: var(--status-warning); }
+  color: var(--status-warning);
+  background: color-mix(in srgb, var(--status-warning) 20%, transparent);
 }
 
 .badge-serious {
