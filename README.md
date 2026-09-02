@@ -100,7 +100,7 @@ python3 run.py "Heavy rainfall has caused severe flooding in Whitefield, Bengalu
 | Frontend dashboard (`frontend/`) | Real — React + TypeScript SPA with charts and a Leaflet/OpenStreetMap map |
 | MuRIL / IndicBERT / LLM misinformation classifiers | `NotImplementedError` stubs — needs labeled multilingual data that doesn't exist yet |
 
-## Known limitations (be ready for these in your viva)
+## Known limitations 
 
 - English-only. IFND turned out to have no Hindi/regional-language content despite its reputation.
 - UNVERIFIED is a confidence threshold, not a real third class.
