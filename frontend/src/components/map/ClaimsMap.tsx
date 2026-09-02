@@ -9,9 +9,9 @@ import { PriorityBadge } from "../common/PriorityBadge";
 // (a well-known Leaflet+bundler issue) and a colored circle also lets us
 // encode priority directly without a sprite-sheet of colored pins.
 const PRIORITY_COLOR: Record<string, string> = {
-  HIGH: "#d03b3b",
-  MEDIUM: "#fab219",
-  LOW: "#0ca30c",
+  HIGH: "#ef4444",
+  MEDIUM: "#ffb100",
+  LOW: "#10b981",
 };
 
 const INDIA_CENTER: [number, number] = [22.5, 80];
@@ -31,7 +31,7 @@ export function ClaimsMap({ points }: { points: MapPoint[] }) {
           pathOptions={{
             color: "#fff",
             weight: 1.5,
-            fillColor: PRIORITY_COLOR[p.priority] ?? "#898781",
+            fillColor: PRIORITY_COLOR[p.priority] ?? "#8c909f",
             fillOpacity: 0.85,
           }}
         >

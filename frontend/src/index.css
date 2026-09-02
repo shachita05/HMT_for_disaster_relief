@@ -1,65 +1,47 @@
-/* Design tokens -- see the dataviz skill's reference palette. Values are
-   used verbatim (not re-derived) so the validated CVD/contrast guarantees
-   still hold. Light is default; dark follows prefers-color-scheme. */
+/* Design tokens. Chart series colors (--series-1..8) are the dataviz
+   skill's validated CVD/contrast-checked palette and are used verbatim,
+   unrelated to the surface/text reskin below -- never re-derive those.
+   Everything else follows the "mission control" dark theme: no light
+   variant, this is a deliberately dark-only interface. */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --surface-1: #fcfcfb;
-  --surface-2: #f9f9f7;
-  --surface-card: #ffffff;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --baseline: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.10);
+  --surface-1: #0d1c2d;
+  --surface-2: #0f172a;
+  --surface-card: #1e293b;
+  --text-primary: #d4e4fa;
+  --text-secondary: #c2c6d6;
+  --text-muted: #8c909f;
+  --gridline: #273647;
+  --baseline: #334155;
+  --border: #334155;
 
-  --series-1: #2a78d6; /* blue -- primary metric hue */
-  --series-2: #eb6834; /* orange */
-  --series-3: #1baf7a; /* aqua */
-  --series-4: #eda100; /* yellow */
-  --series-5: #e87ba4; /* magenta */
-  --series-6: #008300; /* green */
-  --series-7: #4a3aa7; /* violet */
-  --series-8: #e34948; /* red */
+  --primary: #adc6ff;
+  --on-primary: #002e6a;
 
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #d03b3b;
-  --success-text: #006300;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --shadow-card: 0 1px 2px rgba(11, 11, 11, 0.06), 0 1px 8px rgba(11, 11, 11, 0.04);
-}
+  --status-good: #10b981;
+  --status-warning: #ffb100;
+  --status-serious: #f97316;
+  --status-critical: #ef4444;
+  --success-text: #10b981;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --surface-1: #1a1a19;
-    --surface-2: #0d0d0d;
-    --surface-card: #232322;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --baseline: #383835;
-    --border: rgba(255, 255, 255, 0.10);
+  --font-heading: "Hanken Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
-    --series-6: #008300;
-    --series-7: #9085e9;
-    --series-8: #e66767;
-
-    --success-text: #0ca30c;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 8px rgba(0, 0, 0, 0.2);
-  }
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 8px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -72,14 +54,34 @@ html, body, #root {
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   background: var(--surface-2);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.4rem;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
 a {
-  color: var(--series-1);
+  color: var(--primary);
 }
 
 .page {
@@ -168,13 +170,14 @@ button, input, textarea, select {
 }
 
 .btn:hover {
-  border-color: var(--series-1);
+  border-color: var(--primary);
 }
 
 .btn-primary {
-  background: var(--series-1);
-  border-color: var(--series-1);
-  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  font-weight: 700;
 }
 
 .btn-primary:hover {
@@ -197,6 +200,14 @@ textarea, .input {
 }
 
 textarea:focus, .input:focus, select:focus {
-  outline: 2px solid var(--series-1);
+  outline: 2px solid var(--primary);
   outline-offset: 1px;
+}
+
+.card-title, .page-title {
+  font-family: var(--font-heading);
+}
+
+th, .badge {
+  font-family: var(--font-mono);
 }
